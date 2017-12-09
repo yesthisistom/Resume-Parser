@@ -14,41 +14,6 @@ from pdfminer.converter import PDFPageAggregator
 from pdfminer.layout import LAParams, LTTextBox, LTTextLine
 
 
-######################
-## Requires PDFMiner3k
-##
-##  Takes a PDF file in, and returns a string of all the text.
-######################
-def get_pdf_text(pdf_file):
-    pdf_text = ""
-    
-    print ("Opening pdf", pdf_file)
-    with open(pdf_file, 'rb') as file_hdl:
-                
-        parser = PDFParser(file_hdl)
-        doc = PDFDocument()
-        parser.set_document(doc)
-        doc.set_parser(parser)
-        doc.initialize('')
-        
-        rsrcmgr = PDFResourceManager()
-        laparams = LAParams()
-        laparams.char_margin = 1.0
-        laparams.word_margin = 1.0
-        device = PDFPageAggregator(rsrcmgr, laparams=laparams)
-        interpreter = PDFPageInterpreter(rsrcmgr, device)
-
-        for page in doc.get_pages():
-            interpreter.process_page(page)
-            layout = device.get_result()
-            for lt_obj in layout:
-                if isinstance(lt_obj, LTTextBox) or isinstance(lt_obj, LTTextLine):
-                    pdf_text += lt_obj.get_text()
-        
-    
-    return pdf_text
-
-
 ###################
 ## Requires Fitz
 ##  
@@ -103,9 +68,6 @@ def reverse_image(filename):
     fimg=cv2.flip(img,0)
     cv2.imwrite(filename, fimg)
     
-    
-
-
 
 #################
 ## Requires tesseract to be isntalled, as well as the pytesseract library
@@ -121,3 +83,42 @@ def get_text_from_image(image_in):
     if os.path.isfile(image_in):
         image_data = Image.open(image_in)
         return image_to_string(image_data, lang='eng',  config=tessdata_dir_config)
+        
+        
+######################
+## Requires PDFMiner3k
+##
+##  Takes a PDF file in, and returns a string of all the text.
+######################
+def get_pdf_text(pdf_file):
+    pdf_text = ""
+    
+    print ("Opening pdf", pdf_file)
+    with open(pdf_file, 'rb') as file_hdl:
+                
+        parser = PDFParser(file_hdl)
+        doc = PDFDocument()
+        parser.set_document(doc)
+        doc.set_parser(parser)
+        doc.initialize('')
+        
+        rsrcmgr = PDFResourceManager()
+        laparams = LAParams()
+        laparams.char_margin = 1.0
+        laparams.word_margin = 1.0
+        device = PDFPageAggregator(rsrcmgr, laparams=laparams)
+        interpreter = PDFPageInterpreter(rsrcmgr, device)
+
+        for page in doc.get_pages():
+            interpreter.process_page(page)
+            layout = device.get_result()
+            for lt_obj in layout:
+                if isinstance(lt_obj, LTTextBox) or isinstance(lt_obj, LTTextLine):
+                    pdf_text += lt_obj.get_text()
+    
+    if len(pdf_text) == 0:
+        img_files = get_pdf_images(pdf)
+        for img_file in img_files:
+            pdf_text += get_text_from_image(img_file)
+    
+    return pdf_text
