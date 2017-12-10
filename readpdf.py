@@ -1,4 +1,4 @@
-
+import os
 import cv2
 import fitz
 import sys,  re
@@ -93,7 +93,6 @@ def get_text_from_image(image_in):
 def get_pdf_text(pdf_file):
     pdf_text = ""
     
-    print ("Opening pdf", pdf_file)
     with open(pdf_file, 'rb') as file_hdl:
                 
         parser = PDFParser(file_hdl)
@@ -117,7 +116,7 @@ def get_pdf_text(pdf_file):
                     pdf_text += lt_obj.get_text()
     
     if len(pdf_text) == 0:
-        img_files = get_pdf_images(pdf)
+        img_files = get_pdf_images(pdf_file)
         for img_file in img_files:
             pdf_text += get_text_from_image(img_file)
     

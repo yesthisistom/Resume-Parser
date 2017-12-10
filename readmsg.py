@@ -16,11 +16,11 @@ def get_msg_attachment(msg_in):
         outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
         msg = outlook.OpenSharedItem(msg_in)        #filename including path
         att = msg.Attachments
-        
-        Integer count = 0;
-        for attachment in attatchments:
-            filename, file_extension = os.path.splitext(attatchments)
-            file_out = ntpath.basename(msg_in).replace(".msg", "_" + str(count) + "." + file_extension.lower())
+
+        count = 0;
+        for attachment in att:
+            filename, file_extension = os.path.splitext(str(attachment))
+            file_out = ntpath.basename(msg_in).replace(".msg", "_" + str(count) + file_extension.lower())
             
             filename = os.path.join(folder, file_out)
             attachment.SaveAsFile(filename)
@@ -29,8 +29,9 @@ def get_msg_attachment(msg_in):
             count += 1
 
         del outlook, msg
-    except:
+    except Exception as e:
         print("Failed to read file " + msg_in)
+        print(e)
     
     return filenames
     

@@ -1,9 +1,14 @@
 import readpdf
 import readmsg
 
+import os
+import re
+import sys
 import glob
 import time
+import string
 import ntpath
+import argparse
 import collections
 import pandas as pd
 
@@ -12,30 +17,48 @@ stop_list = [ "a", "about", "above", "after", "again", "against", "all", "am", "
 keywords = ["java", "python", "spark", "hadoop", "mapreduce", "reduce", "clearance"]
 undesirable = ["india", "highschool", "high school"]
 
+output_excel_prefix = "Developer_Resumes_"
 
-def get_text_from_files(filelist):
+def get_text_from_files(filelist, existing_df):
 
     file_text_dict = {}
     
-    while len(filelist) > 0:
-        file = filelist.pop(0).lower()
+    idx = 0
+    while idx < len(filelist):
+        file = filelist[idx]
+        idx += 1
+        
+        fn_key = ntpath.basename(file)
+        fn_key = fn_key.replace("New Candidate ", "").split (" for ")[0]
+        
+        #any(df.column == 07311954)
+        if (not existing_df is None) and any(existing_df.iloc[:, 0] == fn_key):
+            print("Skipping", fn_key)
+            continue
+        else:
+            print ("Using key", fn_key)
+         
         
         text = None
         ###############
         ## if msg, get attachments
         ##  add attachment to filelist
-        if file.endswith(".msg"):
+        if file.lower().endswith(".msg"):
             attachments = readmsg.get_msg_attachment(file)
-            filelist.extend(filelist)
+            if attachments and len(attachments) > 0:
+                for att in attachments:
+                    if not att in filelist:
+                        filelist.append(att)
+            
         
         ###############
         ## if PDF, read PDF text
-        elif file.endswith(".pdf"):
+        elif file.lower().endswith(".pdf"):
             text = readpdf.get_pdf_text(file)
             
         ###############
         ## if word doc, read word text
-        elif file.endswith(".docx"):
+        elif file.lower().endswith(".docx"):
             print ("Word doc")
             
         else: 
@@ -43,10 +66,7 @@ def get_text_from_files(filelist):
             print ("Skipping file type ", f_ext)
     
     
-        if type(text) equals str:
-            fn_key = ntpath.basename(pdf)
-            fn_key = fn_key.replace("New Candidate ", "").split (" for ")[0]
-            
+        if type(text) == str:
             file_text_dict[fn_key] = text
             
     return file_text_dict
@@ -73,14 +93,14 @@ def get_bag_of_words_from_resume(resume_text):
             
     return bag_of_words
     
-def create_dict_for_resume(resume_text, filename):
+def create_dict_for_resume(resume_text, resume_id):
     
     global keywords
     global undesirable
     
     
     output_dict = {}
-    output_dict["resume pdf"] = filename
+    output_dict["resume id"] = resume_id
     # Get email
     email_pattern = r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+"
     email_str = ""
@@ -134,12 +154,17 @@ def create_dict_for_resume(resume_text, filename):
     return output_dict
 
 
-def create_excel_output(resume_dict_list, file_out):
+def create_excel_output(resume_dict_list, existing_df, folder):
     resume_df = pd.DataFrame(resume_dict_list)
 
-    cols = ["resume pdf", "email", "phone", "key words", "red flags", "frequently used words"]
+    cols = ["resume id", "email", "phone", "key words", "red flags", "frequently used words"]
     resume_df = resume_df[cols]
+    resume_df["reviewed"] = "no"
+    resume_df["notes"] = ""
+    resume_df["interview"] = ""
 
+    if not existing_df is None:
+        resume_df = pd.concat([resume_df, existing_df])
 
     ##########
     ##Filter and sort
@@ -153,7 +178,8 @@ def create_excel_output(resume_dict_list, file_out):
     
     timestr = time.strftime("%Y%m%d-%H%M%S")
 
-    filename = "Developer_Resumes_" + timestr + ".xlsx"
+    filename = excel_prefix + timestr + ".xlsx"
+    filename = os.path.join(folder, filename)
     writer = pd.ExcelWriter(filename)
 
     resume_df.to_excel(writer, 'All Resumes', index=False)
@@ -162,22 +188,81 @@ def create_excel_output(resume_dict_list, file_out):
     writer.save()
 
 
-
 def main(argv):
+
     ########################
     ## Parsing arguments
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument("-i", "--inputDir", help="Directory containing resumes (pdf and .docx) or .msg files")
+    parser.add_argument("-x", "--existingExcel", help="Previously created excel to update", default=None)
+                    
+    args = parser.parse_args()
     
+    dir = args.inputDir
+    existing_excel = args.existingExcel
+    
+    if dir is None:
+        parser.print_help()
+        return 
+        
+    if not os.path.exists(os.path.dirname(dir)):
+        print ("Directory not found: " + dir)
+        return
+        
+    if existing_excel:
+        if s.path.splitext(file)[1].lower() != ".xlsx":
+            print ("Input for existing excel is not an excel file")
+            return
+        if not os.path.exists(existing_excel):
+            print ("Unable to find existing excel file")
+            return
+        
+   
     ########################
     ## Get files to process
-    filelist = glob.glob(os.path.join(path_in, "*.*"))
+    print ("Finding Files")
+    file_list = glob.glob(os.path.join(dir, "*.*"))
+    supported_exts = [".docx", ".pdf", ".msg"]
+    
+    #########
+    ## If no excel file was input, try to find one
+    if not existing_excel:
+        excel_files = []
+        for file in file_list:
+            if os.path.splitext(file)[1].lower() == ".xlsx" and os.path.basename(file).startswith(output_excel_prefix):
+                excel_files.append(file)
+        if len(excel_files) > 0:
+            existing_excel = sorted(excel_files)[-1]
+            print ("Using Excel " + os.path.basename(file))
+    
+    for file in file_list:
+        if not os.path.splitext(file)[1].lower() in supported_exts:
+            file_list.remove(file)
+    
+    if len(file_list) == 0:
+        print("No supported files found in directory: " + dir)
+        return
+        
+    #######################
+    ## Read existing file
+    #######################
+    existing_df = None
+    if existing_excel:
+        existing_df = pd.read_excel(existing_excel, sheet_name="All Resumes")
     
     #######################
     ## Process files
-    file_text_map = get_text_from_files(filelist)
+    print("Reading Resume Text for", len(file_list), "files")
+    file_text_map = get_text_from_files(file_list, existing_df)
+    
+    resume_dict_list = []
+    for id, resume in file_text_map.items():
+        resume_dict_list.append(create_dict_for_resume(resume, id))
     
     ########################
     ## Write results
-
+    print ("Writing results")
+    create_excel_output(resume_dict_list, existing_df, dir)
 
 if __name__ == '__main__':
     main(sys.argv[1:])
