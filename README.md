@@ -10,7 +10,9 @@ The PDF reading software will work on both text PDFs and PDFs with the text as i
 
 See 'requirements.txt' for required packages.  This script and libraries were written using python 3.6.  
 
-If you intend to process PDFs with images and no text, please install Google's [Tesseract OCR ](https://github.com/tesseract-ocr/tesseract)
+If you intend to process PDFs with images and no text, please install Google's [Tesseract OCR ](https://github.com/tesseract-ocr/tesseract).
+
+'requirements.txt' created with pipreqs.
 
 ## Included libraries
 
