@@ -51,7 +51,7 @@ In its current state, desirable keywords are development specific, but this list
 ### Running as Standalone
 
 ```
-> python resume_parser.py -hadoop
+> python resume_parser.py -h
 
 usage: resume_parser.py [-h] [-x EXISTINGEXCEL] -i INPUTDIR
 
