@@ -37,6 +37,14 @@ The main entry point into readpdf is the function 'get_pdf_text', which takes a 
 
 It will utilize the helper functions in the readpdf to extract text from the input PDF.  If there is no text, it will attempt to extract any images from the PDF and read the image text.  
 
+If Tesseract is installed, edit the 'tessdata_dir_config' variable and 'pytesseract.pytesseract.tesseract_cmd' variable to reflect your install. These are in the 'get_text_from_image' function.
+
+```
+def get_text_from_image(image_in):
+    tessdata_dir_config = '--tessdata-dir "C:\\Program Files (x86)\\Tesseract-OCR\\tessdata"'
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe'
+```
+
 ## How to Run 'resume_parser.py'
 
 Before running, please review the global variables at the top of the file. 

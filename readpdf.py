@@ -57,7 +57,7 @@ def get_pdf_images(pdf_file):
     
     
 ###############
-## Requires cs2
+## Requires cv2
 ##  The Images read in from PDF are reversed in the y direction
 ##  Reads in the provided PNG file, reverses the axis, and writes to the same filename
 ###############    
@@ -70,14 +70,14 @@ def reverse_image(filename):
     
 
 #################
-## Requires tesseract to be isntalled, as well as the pytesseract library
+## Requires tesseract to be installed, as well as the pytesseract library
 ##   Alter the tesseract install location if required
 ##  
 ##  Input is an image
 ##  Output is a string of all text in image
 #################
 def get_text_from_image(image_in):
-    tessdata_dir_config = '--tessdata-dir "C:\\Program Files (x86)\\Tesseract-OCR\\tessdata"'
+    tessdata_dir_config = r'--tessdata-dir "C:\Program Files (x86)\Tesseract-OCR\tessdata"'
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe'
     
     if os.path.isfile(image_in):
