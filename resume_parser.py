@@ -14,8 +14,8 @@ import pandas as pd
 
 stop_list = [ "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "could", "did", "do", "does", "doing", "down", "during", "each", "few", "for", "from", "further", "had", "has", "have", "having", "he", "he'd", "he'll", "he's", "her", "here", "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm", "i've", "if", "in", "into", "is", "it", "it's", "its", "itself", "let's", "me", "more", "most", "my", "myself", "nor", "of", "on", "once", "only", "or", "other", "ought", "our", "ours", "ourselves", "out", "over", "own", "same", "she", "she'd", "she'll", "she's", "should", "so", "some", "such", "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there", "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "we", "we'd", "we'll", "we're", "we've", "were", "what", "what's", "when", "when's", "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's", "with", "would", "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself", "yourselves" ]
 
-keywords = ["java", "python", "spark", "hadoop", "mapreduce", "reduce", "clearance"]
-undesirable = ["india", "highschool", "high school"]
+keywords = ["java", "python", "spark", "hadoop", "mapreduce", "reduce"]
+undesirable = ["highschool", "high school"]
 
 output_excel_prefix = "Developer_Resumes_"
 
@@ -186,15 +186,43 @@ def create_excel_output(resume_dict_list, existing_df, folder):
     filtered_sorted.to_excel(writer, 'Filtered Resumes', index=False)
 
     writer.save()
+    
+def resume_parser(file_list, existing_excel=None):
+    
+    #######################
+    ## Read existing file
+    #######################
+    existing_df = None
+    if existing_excel:
+        existing_df = pd.read_excel(existing_excel, sheet_name="All Resumes")
+    
+    #######################
+    ## Process files
+    print("Reading Resume Text for", len(file_list), "files")
+    file_text_map = get_text_from_files(file_list, existing_df)
+    
+    resume_dict_list = []
+    for id, resume in file_text_map.items():
+        resume_dict_list.append(create_dict_for_resume(resume, id))
+    
+    ########################
+    ## Write results
+    print ("Writing results")
+    create_excel_output(resume_dict_list, existing_df, dir)
+    
+    return
 
 
 def main(argv):
 
     ########################
     ## Parsing arguments
-    parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument("-i", "--inputDir", help="Directory containing resumes (pdf and .docx) or .msg files")
+    parser = argparse.ArgumentParser(description='Create Resume Triage Spreadsheet')
+    parser
     parser.add_argument("-x", "--existingExcel", help="Previously created excel to update", default=None)
+    
+    requiredNamed = parser.add_argument_group('required named arguments')
+    requiredNamed.add_argument("-i", "--inputDir", help="Directory containing resumes (pdf and .docx) or .msg files", required=True)
                     
     args = parser.parse_args()
     
@@ -242,27 +270,13 @@ def main(argv):
     if len(file_list) == 0:
         print("No supported files found in directory: " + dir)
         return
-        
-    #######################
-    ## Read existing file
-    #######################
-    existing_df = None
-    if existing_excel:
-        existing_df = pd.read_excel(existing_excel, sheet_name="All Resumes")
     
-    #######################
-    ## Process files
-    print("Reading Resume Text for", len(file_list), "files")
-    file_text_map = get_text_from_files(file_list, existing_df)
+    #####################
+    ## Call the API
+    #####################
+    resume_parser(file_list, existing_excel)
     
-    resume_dict_list = []
-    for id, resume in file_text_map.items():
-        resume_dict_list.append(create_dict_for_resume(resume, id))
-    
-    ########################
-    ## Write results
-    print ("Writing results")
-    create_excel_output(resume_dict_list, existing_df, dir)
+    return 
 
 if __name__ == '__main__':
     main(sys.argv[1:])
