@@ -1,5 +1,6 @@
-import readpdf
 import readmsg
+import readpdf
+import readdocx
 
 import os
 import re
@@ -59,7 +60,7 @@ def get_text_from_files(filelist, existing_df):
         ###############
         ## if word doc, read word text
         elif file.lower().endswith(".docx"):
-            print ("Word doc")
+            text = readdocx.getDocxText(file)
             
         else: 
             f, f_ext = os.path.splitext(file)

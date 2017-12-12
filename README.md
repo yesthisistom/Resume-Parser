@@ -14,6 +14,18 @@ If you intend to process PDFs with images and no text, please install Google's [
 
 'requirements.txt' created with pipreqs.
 
+Please note, if using python 3, install the docx library using 
+
+```
+pip install python-docx
+```
+
+rather than the python 2 compatible version
+
+```
+pip install docx
+```
+
 ## Included libraries
 
 ### readmsg.py
@@ -46,6 +58,12 @@ def get_text_from_image(image_in):
     tessdata_dir_config = '--tessdata-dir "C:\\Program Files (x86)\\Tesseract-OCR\\tessdata"'
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe'
 ```
+
+### readdocx.py
+
+The 'readdocx' library contains a single function, getDocxText, which takes the path to a single docx file as input.  
+
+It will return a string of all the text contained in the docx. 
 
 ## How to Run 'resume_parser.py'
 
