@@ -36,9 +36,6 @@ def get_text_from_files(filelist, existing_df):
         if (not existing_df is None) and any(existing_df.iloc[:, 0] == fn_key):
             print("Skipping", fn_key)
             continue
-        else:
-            print ("Using key", fn_key)
-         
         
         text = None
         ###############
@@ -179,7 +176,8 @@ def create_excel_output(resume_dict_list, existing_df, folder):
     
     timestr = time.strftime("%Y%m%d-%H%M%S")
 
-    filename = excel_prefix + timestr + ".xlsx"
+    filename = output_excel_prefix + timestr + ".xlsx"
+
     filename = os.path.join(folder, filename)
     writer = pd.ExcelWriter(filename)
 
@@ -188,7 +186,7 @@ def create_excel_output(resume_dict_list, existing_df, folder):
 
     writer.save()
     
-def resume_parser(file_list, existing_excel=None):
+def resume_parser(file_list, input_dir, existing_excel=None):
     
     #######################
     ## Read existing file
@@ -203,13 +201,13 @@ def resume_parser(file_list, existing_excel=None):
     file_text_map = get_text_from_files(file_list, existing_df)
     
     resume_dict_list = []
-    for id, resume in file_text_map.items():
-        resume_dict_list.append(create_dict_for_resume(resume, id))
+    for resume_id, resume in file_text_map.items():
+        resume_dict_list.append(create_dict_for_resume(resume, resume_id))
     
     ########################
     ## Write results
     print ("Writing results")
-    create_excel_output(resume_dict_list, existing_df, dir)
+    create_excel_output(resume_dict_list, existing_df, input_dir)
     
     return
 
@@ -227,15 +225,15 @@ def main(argv):
                     
     args = parser.parse_args()
     
-    dir = args.inputDir
+    input_dir = args.inputDir
     existing_excel = args.existingExcel
     
-    if dir is None:
+    if input_dir is None:
         parser.print_help()
         return 
         
-    if not os.path.exists(os.path.dirname(dir)):
-        print ("Directory not found: " + dir)
+    if not os.path.exists(os.path.dirname(input_dir)):
+        print ("Directory not found: " + input_dir)
         return
         
     if existing_excel:
@@ -250,7 +248,7 @@ def main(argv):
     ########################
     ## Get files to process
     print ("Finding Files")
-    file_list = glob.glob(os.path.join(dir, "*.*"))
+    file_list = glob.glob(os.path.join(input_dir, "*.*"))
     supported_exts = [".docx", ".pdf", ".msg"]
     
     #########
@@ -269,13 +267,13 @@ def main(argv):
             file_list.remove(file)
     
     if len(file_list) == 0:
-        print("No supported files found in directory: " + dir)
+        print("No supported files found in directory: " + input_dir)
         return
     
     #####################
     ## Call the API
     #####################
-    resume_parser(file_list, existing_excel)
+    resume_parser(file_list, input_dir, existing_excel)
     
     return 
 
