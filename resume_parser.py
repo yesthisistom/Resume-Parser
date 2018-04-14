@@ -1,4 +1,8 @@
-import readmsg
+
+try:
+    import readmsg
+except:
+    print("Failed to import 'readmsg.py'.  Extracting attachments from .msg files will not be available.")
 import readpdf
 import readdocx
 

@@ -1,6 +1,9 @@
 import os
 import cv2
-import fitz
+try:
+    import fitz
+except:
+    print("Failed to import fitz.  Reading images from PDF will not be available.")
 import sys,  re
 
 from PIL import Image
